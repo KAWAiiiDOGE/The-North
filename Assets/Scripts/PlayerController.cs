@@ -1,10 +1,15 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using NaughtyAttributes;
+using Unity.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace TheNorth
 {
-    // TODO: Говнокод, нужно сделать отдельный класс для инпута игрока
+    // TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     [RequireComponent(typeof(CharacterController), typeof(PlayerInput))]
     public class PlayerController : MonoBehaviour
     {
@@ -13,9 +18,9 @@ namespace TheNorth
         [field: SerializeField, ShowIf("CanLook")] public Transform CameraPivot { get; private set; }
         [field: SerializeField, ShowIf("CanLook"), MinMaxSlider(-90, 90)] public Vector2Int VerticalFov { get; private set; } = new Vector2Int(-90, 90);
         [field: SerializeField, ShowIf("CanLook"), MinMaxSlider(-90, 90)] public Vector2Int HorizontalFov { get; private set; } = new Vector2Int(-90, 90);
-        [field: SerializeField, ShowIf("CanLook")] public bool IsInvertX { get; private set; } = false; // TODO: В дальнейшем следует переделать: Input System Package => Look => Processors => Invert Vector2
-        [field: SerializeField, ShowIf("CanLook")] public bool IsInvertY { get; private set; } = false; // TODO: В дальнейшем следует переделать: Input System Package => Look => Processors => Invert Vector2
-        [field: SerializeField, ShowIf("CanLook"), Range(0f, 2.0f)] public float MouseSensitivity { get; private set; } = 0.5f; // TODO: В дальнейшем следует переделать: Input System Package => Look => Processors => Scale Vector2
+        [field: SerializeField, ShowIf("CanLook")] public bool IsInvertX { get; private set; } = false; // TODO: пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: Input System Package => Look => Processors => Invert Vector2
+        [field: SerializeField, ShowIf("CanLook")] public bool IsInvertY { get; private set; } = false; // TODO: пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: Input System Package => Look => Processors => Invert Vector2
+        [field: SerializeField, ShowIf("CanLook"), Range(0f, 2.0f)] public float MouseSensitivity { get; private set; } = 0.5f; // TODO: пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: Input System Package => Look => Processors => Scale Vector2
 
         [field: SerializeField, Space(10)] public bool CanMove { get; private set; } = true;
         [field: SerializeField, ShowIf("CanMove"), Min(0f)] public float MoveSpeed { get; private set; } = 8f;
@@ -39,12 +44,12 @@ namespace TheNorth
         [field: SerializeField] public AudioClip[] FootstepAudioClips { get; private set; }
         [field: SerializeField, Range(0, 1)] public float FootstepAudioVolume { get; private set; } = 0.5f;
 
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public Vector3 CurrentVelocity { get; private set; }
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public float CurrentSpeed { get; private set; }
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsMoving { get; private set; }
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsSprinting { get; private set; }
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsGrounded { get; private set; }
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsCrouching { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public Vector3 CurrentVelocity { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public float CurrentSpeed { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public bool IsMoving { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public bool IsSprinting { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public bool IsGrounded { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public bool IsCrouching { get; private set; }
 
         CharacterController _characterController;
         Vector3 _moveVelocity;
@@ -60,6 +65,9 @@ namespace TheNorth
         bool _isSprint;
         bool _isJump;
         bool _isCrouch;
+
+        [SerializeField] float _maxDialogueDistance;
+        [SerializeField] LayerMask _useButtonLayerMask;
 
         void Start()
         {
@@ -109,7 +117,7 @@ namespace TheNorth
         {
             //if (IsMoving)
             //{
-            //    // TODO: Написать Gizmos который рисует вектор движения персонажа
+            //    // TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Gizmos пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             //    Gizmos.color = Color.cyan;
             //    Vector3 moveDirection = new Vector3(_moveVelocity.x, 0, _moveVelocity.z);
             //    Vector3 ray = transform.TransformDirection(Vector3.zero - moveDirection);
@@ -137,6 +145,31 @@ namespace TheNorth
         {
             _isCrouch = context.ReadValueAsButton();
         }
+        public void OnSubmitPressed(InputAction.CallbackContext context)
+        {
+            if(context.started) 
+            {
+                DialogueManager.Instance.OnSubmitPressed();
+            }
+        }
+        public void OnUse(InputAction.CallbackContext context)
+        {
+            if(context.started) {
+                Camera camera = Camera.main;
+                RaycastHit[] hits = Physics.RaycastAll(camera.transform.position, camera.transform.forward, _maxDialogueDistance, _useButtonLayerMask);
+                TryStartDialogue(hits);
+            }
+        }
+        private bool TryStartDialogue(RaycastHit[] hits) {
+            for(int i = 0; i < hits.Length; i++) {
+                TalkableTest talkable = hits[i].collider.gameObject.GetComponent<TalkableTest>();
+                if (talkable != null) {
+                    talkable.StartDialogue();
+                    return true;
+                }
+            }
+            return false;
+        }
 
         void CheckStates()
         {
@@ -158,7 +191,7 @@ namespace TheNorth
         }
         void ApplyHeight()
         {
-            //// UNDONE: Доделать детекцию потолка, возможно нужен статус IsInCrouching
+            //// UNDONE: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ IsInCrouching
             //if (IsCrouching && Physics.Raycast(transform.position + _defaultCenter, Vector3.up, _defaultHeight + 4f))
             //{
             //    Debug.Log("Obstacle Above!");
