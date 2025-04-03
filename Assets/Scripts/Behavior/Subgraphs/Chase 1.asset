@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-1819324801878911931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c02bb70996b49eba31d0c206e28da24, type: 3}
+  m_Name: Chase 1
+  m_EditorClassIdentifier: 
+  VersionTimestamp: 638784320700445477
+  AssetID:
+    m_Value0: 3767685927519317645
+    m_Value1: 11798871998450061898
+  m_Blackboard:
+    m_Variables:
+    - rid: 8439477977476759945
+    - rid: 8439477977476760016
+    - rid: 8439477977476760017
+    - rid: 8439477977476760018
+  m_SharedBlackboardVariableGuids: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 8439477977476759945
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 8093500813713783088
+          m_Value1: 14978029708948920584
+        Name: Self
+        m_Value: {fileID: 0}
+    - rid: 8439477977476760016
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 6671320154938755647
+          m_Value1: 5354525076903792761
+        Name: TargetObject
+        m_Value: {fileID: 0}
+    - rid: 8439477977476760017
+      type: {class: 'BlackboardVariable`1[[System.Single, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 8315831779763669677
+          m_Value1: 11315320599513762189
+        Name: ChaseRadius
+        m_Value: 0
+    - rid: 8439477977476760018
+      type: {class: 'BlackboardVariable`1[[State, Assembly-CSharp]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 8416303142559880325
+          m_Value1: 6606127653319535447
+        Name: CurrentState
+        m_Value: 2
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd922ae02c94c87a66e46a10a7319b9, type: 3}
+  m_Name: Chase 1
+  m_EditorClassIdentifier: 
+  AssetID:
+    m_Value0: 3767685927519317645
+    m_Value1: 11798871998450061898
+  m_Variables:
+  - rid: 8439477977476759944
+  - rid: 8439477977476760013
+  - rid: 8439477977476760014
+  - rid: 8439477977476760015
+  m_VersionTimestamp: 638784320700445477
+  m_CommandBuffer:
+    m_Commands: []
+  m_RuntimeBlackboardAsset: {fileID: -1819324801878911931}
+  references:
+    version: 2
+    RefIds:
+    - rid: 8439477977476759944
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 8093500813713783088
+          m_Value1: 14978029708948920584
+        Name: Self
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+    - rid: 8439477977476760013
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 6671320154938755647
+          m_Value1: 5354525076903792761
+        Name: TargetObject
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+    - rid: 8439477977476760014
+      type: {class: 'TypedVariableModel`1[[System.Single, mscorlib]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 8315831779763669677
+          m_Value1: 11315320599513762189
+        Name: ChaseRadius
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: 0
+    - rid: 8439477977476760015
+      type: {class: 'TypedVariableModel`1[[State, Assembly-CSharp]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 8416303142559880325
+          m_Value1: 6606127653319535447
+        Name: CurrentState
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: 2

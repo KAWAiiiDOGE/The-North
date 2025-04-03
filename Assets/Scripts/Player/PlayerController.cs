@@ -1,78 +1,88 @@
-using NaughtyAttributes;
+Ôªøusing NaughtyAttributes;
 using UnityEngine;
+using Zenject;
 
 namespace TheNorth
 {
+    [SelectionBase]
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour
     {
-        /// <summary>
-        /// ! ƒÀﬂ –¿¡Œ“€ Œ¡ﬂ«¿“≈À‹ÕŒ  »Õ‹“≈ ——€À ” ¬ »Õ—œ≈ “Œ–≈ !
-        /// <para>
-        /// ¬ÂÏÂÌÌÓÂ Â¯ÂÌËÂ. œÓÚÓÏ ÒÚÓËÚ ÔÂÂ‰ÂÎ‡Ú¸
-        /// </para>
-        /// </summary>
-        /// TODO: œÓÒÎÂ ËÁÏÂÌÂÌËˇ InputHandler - Û‰‡ÎËÚ¸ ÔÓÎÂ
-        [field: SerializeField, Tooltip("ƒÀﬂ –¿¡Œ“€ Œ¡ﬂ«¿“≈À‹ÕŒ  »Õ‹“≈ ——€À ” ¬ »Õ—œ≈ “Œ–≈")] InputHandler _inputHandler;
+        [field: Header("Look Settings")]
+        [field: SerializeField] public bool CanLook { get; set; } = true;
+        [field: SerializeField, ShowIf(nameof(CanLook))] public CinemachineCameraTarget CameraPivot { get; private set; }
+        [field: SerializeField, ShowIf(nameof(CanLook)), MinMaxSlider(-90, 90)] public Vector2Int VerticalFov { get; private set; } = new Vector2Int(-90, 90);
+        [field: SerializeField, ShowIf(nameof(CanLook)), MinMaxSlider(-90, 90)] public Vector2Int HorizontalFov { get; private set; } = new Vector2Int(-90, 90);
+        [field: SerializeField, ShowIf(nameof(CanLook))] public bool IgnoreTimeScale { get; private set; } = false;
+        [field: SerializeField, ShowIf(nameof(CanLook))] public bool IsInvertX { get; private set; } = false; // TODO: –í –¥–∞–ª—å–Ω–µ–π—à–µ–º —Å–ª–µ–¥—É–µ—Ç –ø–µ—Ä–µ–¥–µ–ª–∞—Ç—å: Input System Package => Look => Processors => Invert Vector2
+        [field: SerializeField, ShowIf(nameof(CanLook))] public bool IsInvertY { get; private set; } = false; // TODO: –í –¥–∞–ª—å–Ω–µ–π—à–µ–º —Å–ª–µ–¥—É–µ—Ç –ø–µ—Ä–µ–¥–µ–ª–∞—Ç—å: Input System Package => Look => Processors => Invert Vector2
+        [field: SerializeField, ShowIf(nameof(CanLook)), Range(0f, 2.0f)] public float MouseSensitivity { get; private set; } = 0.5f; // TODO: –í –¥–∞–ª—å–Ω–µ–π—à–µ–º —Å–ª–µ–¥—É–µ—Ç –ø–µ—Ä–µ–¥–µ–ª–∞—Ç—å: Input System Package => Look => Processors => Scale Vector2
 
-        [field: Header("Character Behaviour")]
-        [field: SerializeField] public bool CanLook { get; private set; } = true;
-        [field: SerializeField, ShowIf("CanLook")] public CinemachineCameraTarget CameraPivot { get; private set; }
-        [field: SerializeField, ShowIf("CanLook"), MinMaxSlider(-90, 90)] public Vector2Int VerticalFov { get; private set; } = new Vector2Int(-90, 90);
-        [field: SerializeField, ShowIf("CanLook"), MinMaxSlider(-90, 90)] public Vector2Int HorizontalFov { get; private set; } = new Vector2Int(-90, 90);
-        [field: SerializeField, ShowIf("CanLook")] public bool IsInvertX { get; private set; } = false; // TODO: ¬ ‰‡Î¸ÌÂÈ¯ÂÏ ÒÎÂ‰ÛÂÚ ÔÂÂ‰ÂÎ‡Ú¸: Input System Package => Look => Processors => Invert Vector2
-        [field: SerializeField, ShowIf("CanLook")] public bool IsInvertY { get; private set; } = false; // TODO: ¬ ‰‡Î¸ÌÂÈ¯ÂÏ ÒÎÂ‰ÛÂÚ ÔÂÂ‰ÂÎ‡Ú¸: Input System Package => Look => Processors => Invert Vector2
-        [field: SerializeField, ShowIf("CanLook"), Range(0f, 2.0f)] public float MouseSensitivity { get; private set; } = 0.5f; // TODO: ¬ ‰‡Î¸ÌÂÈ¯ÂÏ ÒÎÂ‰ÛÂÚ ÔÂÂ‰ÂÎ‡Ú¸: Input System Package => Look => Processors => Scale Vector2
+        [field: Header("Movement Settings")]
+        [field: SerializeField] public bool CanMove { get; set; } = true;
+        [field: SerializeField, ShowIf(nameof(CanMove)), Min(0f)] public float MoveSpeed { get; private set; } = 8f;
+        [field: SerializeField, ShowIf(nameof(CanMove)), Range(0.1f, 20f)] public float MoveAcceleration { get; private set; } = 10.0f;
+        [field: SerializeField, ShowIf(nameof(CanMove))] public bool CanMoveInAir { get; private set; } = true;
+        [field: SerializeField, ShowIf(nameof(CanMove)), Space(10)] public bool CanSprint { get; private set; } = true;
+        [field: SerializeField, ShowIf(EConditionOperator.And, nameof(CanMove), nameof(CanSprint)), Min(1f)] public float SprintSpeedMultiplier { get; private set; } = 2f;
 
-        [field: SerializeField, Space(10)] public bool CanMove { get; private set; } = true;
-        [field: SerializeField, ShowIf("CanMove"), Min(0f)] public float MoveSpeed { get; private set; } = 8f;
-        [field: SerializeField, ShowIf("CanMove"), Range(0f, 20f)] public float SpeedLerpTime { get; private set; } = 10.0f;
-        [field: SerializeField, ShowIf("CanMove")] public bool CanSprint { get; private set; } = true;
-        [field: SerializeField, ShowIf(EConditionOperator.And, "CanMove", "CanSprint"), Min(1f)] public float SprintSpeedMultiplier { get; private set; } = 2f;
+        [field: SerializeField, Space(10)] public bool CanJump { get; set; } = true;
+        [field: SerializeField, ShowIf(nameof(CanJump)), Min(0f)] public float JumpHeight { get; private set; } = 8.0f;
 
-        [field: SerializeField, Space(10)] public bool CanJump { get; private set; } = true;
-        [field: SerializeField, ShowIf("CanJump"), Min(0f)] public float JumpHeight { get; private set; } = 8.0f;
+        [field: SerializeField, Space(10)] public bool CanCrouch { get; set; } = true;
+        [field: SerializeField, ShowIf(nameof(CanCrouch)), Range(0f, 1f)] public float CrouchHeightMultiplier { get; private set; } = 0.5f;
+        [field: SerializeField, ShowIf(EConditionOperator.And, nameof(CanMove), nameof(CanCrouch)), Range(0f, 1f)] public float CrouchSpeedMultiplier { get; private set; } = 0.5f;
+        [field: SerializeField, ShowIf(nameof(CanMove))] public float HeightAcceleration { get; private set; } = 10.0f;
 
-        [field: SerializeField, Space(10)] public bool CanCrouch { get; private set; } = true;
-        [field: SerializeField, ShowIf("CanCrouch"), Range(0f, 1f)] public float CrouchHeightMultiplier { get; private set; } = 0.5f;
-        [field: SerializeField, ShowIf(EConditionOperator.And, "CanMove", "CanCrouch"), Range(0f, 1f)] public float CrouchSpeedMultiplier { get; private set; } = 0.5f;
-        [field: SerializeField, ShowIf("CanMove")] public float HeightLerpTime { get; private set; } = 10.0f;
+        [field: Header("Physics Settings")]
+        [field: SerializeField] public bool IsAffectedByGravity { get; set; } = true;
+        [field: SerializeField, ShowIf(nameof(IsAffectedByGravity)), Range(-20, 0)] public int Gravity { get; private set; } = -10;
 
-        [field: SerializeField, Space(10)] public bool IsAffectedByGravity { get; private set; } = true;
-        [field: SerializeField, ShowIf("IsAffectedByGravity"), Range(-20, 0)] public int Gravity { get; private set; } = -10;
+        [field: SerializeField, Space(10)] public bool CanPush { get; set; } = true;
+        [field: SerializeField, ShowIf(nameof(CanPush)), Range(0, 50)] public int PushPower { get; private set; } = 25;
 
         [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public Vector3 CurrentVelocity { get; private set; }
         [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public float CurrentSpeed { get; private set; }
         [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsMoving { get; private set; }
         [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsSprinting { get; private set; }
-        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsGrounded { get; private set; }
         [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsCrouching { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsGrounded { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsCeiling { get; private set; }
+        [field: SerializeField, Foldout("Dynamic Parameters"), ReadOnly] public bool IsCollideSides { get; private set; }
+
+        [Inject] readonly InputActions _input;
 
         CharacterController _characterController;
         Vector3 _moveVelocity;
+        Vector3 _moveVelocityVertical;
+        Vector3 _moveVelocityHorizontal;
+        Vector3 _moveVelocityHorizontalInAir;
+        Vector3 _targetDirection;
         Vector3 _defaultCenter;
         Vector3 _defaultCameraPivotPosition;
         float _defaultHeight;
         float _targetRotation;
-        float _rotationX = 0f;
-        float _speedMultiplier = 1f;
+        float _cameraPitch;
+        float _cameraYaw;
         float _speed;
+        float _speedMultiplier;
+        float _speedMultiplierInAir;
+        bool _canStandHere;
 
-        void Start()
+        void Awake()
         {
-            if (!CameraPivot)
+            if (CameraPivot == null)
             {
                 foreach (CinemachineCameraTarget child in GetComponentsInChildren<CinemachineCameraTarget>())
                 {
-                    if (child.CompareTag("CinemachineTarget"))
-                    {
-                        CameraPivot = child;
-                        break;
-                    }
+                    CameraPivot = child;
+                    break;
                 }
             }
-
-            _characterController = GetComponent<CharacterController>();
+            _characterController = _characterController != null ? _characterController : GetComponent<CharacterController>();
+        }
+        void Start()
+        {
             _defaultHeight = _characterController.height;
             _defaultCenter = _characterController.center;
             _defaultCameraPivotPosition = CameraPivot.transform.localPosition;
@@ -81,11 +91,19 @@ namespace TheNorth
         {
             CheckStates();
 
+            if (CanLook)
+                ApplyLook();
+
             if (IsAffectedByGravity)
                 ApplyGravity();
 
             if (CanCrouch)
                 ApplyHeight();
+
+            _speedMultiplier = GetSpeedMultiplier();
+
+            if (!IsGrounded && _moveVelocityHorizontalInAir == Vector3.zero)
+                _moveVelocityHorizontalInAir = _moveVelocityHorizontal;
 
             if (CanJump)
                 ApplyJump();
@@ -93,23 +111,45 @@ namespace TheNorth
             if (CanMove)
                 ApplyMove();
 
+            FinalizeMove();
             _characterController.Move(_moveVelocity * Time.deltaTime);
         }
-        void LateUpdate()
+        void OnControllerColliderHit(ControllerColliderHit hit)
         {
-            if (CanLook)
-                ApplyLook();
+            if (!CanPush)
+                return;
+
+            Rigidbody body = hit.rigidbody;
+
+            // No rigidbody
+            if (body == null || body.isKinematic)
+                return;
+
+            // We dont want to push objects below us
+            if (hit.moveDirection.y < -0.3f)
+                return;
+
+            // Calculate push direction from move direction
+            // We only push objects to the sides never up and down
+            Vector3 pushDir = new(hit.moveDirection.x, 0f, hit.moveDirection.z);
+
+            // Apply the push
+            body.AddForce(pushDir * PushPower);
         }
         void OnDrawGizmos()
         {
-            //if (IsMoving)
-            //{
-            //    // TODO: Õ‡ÔËÒ‡Ú¸ Gizmos ÍÓÚÓ˚È ËÒÛÂÚ ‚ÂÍÚÓ ‰‚ËÊÂÌËˇ ÔÂÒÓÌ‡Ê‡
-            //    Gizmos.color = Color.cyan;
-            //    Vector3 moveDirection = new Vector3(_moveVelocity.x, 0, _moveVelocity.z);
-            //    Vector3 ray = transform.TransformDirection(Vector3.zero - moveDirection);
-            //    Gizmos.DrawLine(transform.position, ray);
-            //}
+            if (IsMoving)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawRay(transform.position + _characterController.center, _moveVelocityHorizontal * 0.5f);
+            }
+            if (IsCrouching)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawRay(transform.position + new Vector3(0f, _defaultHeight * CrouchHeightMultiplier, 0f), Vector3.up * (_defaultHeight - (_defaultHeight * CrouchHeightMultiplier)));
+            }
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(transform.position + new Vector3(0f, _defaultHeight, 0f), 0.02f);
         }
 
         void CheckStates()
@@ -117,42 +157,73 @@ namespace TheNorth
             CurrentVelocity = _characterController.velocity;
             CurrentSpeed = CurrentVelocity.magnitude;
             IsGrounded = _characterController.isGrounded;
-            IsMoving = CurrentVelocity.magnitude != 0f;
-            IsSprinting = CanSprint && IsMoving && _inputHandler.SprintValue && !IsCrouching;
-            IsCrouching = CanCrouch && _inputHandler.CrouchValue;
+            IsCeiling = (_characterController.collisionFlags & CollisionFlags.Above) != 0;
+            IsCollideSides = (_characterController.collisionFlags & CollisionFlags.Sides) != 0;
+            IsMoving = CurrentSpeed != 0f;
+            IsSprinting = CanSprint && IsGrounded && IsMoving && _input.Player.Sprint.IsPressed() && !IsCrouching;
+            IsCrouching = CanCrouch && _input.Player.Crouch.IsPressed();
         }
         void ApplyGravity()
         {
             // Stop vertical velocity dropping when grounded
-            if (IsGrounded && _moveVelocity.y < 0f)
-                _moveVelocity.y = Gravity * 0.5f;
+            if (IsGrounded && _moveVelocityVertical.y < 0f)
+            {
+                _moveVelocityVertical.y = Gravity * 0.5f;
+                _moveVelocityHorizontalInAir = Vector3.zero;
+            }
 
-            if (!IsGrounded)
-                _moveVelocity.y += Gravity * Time.deltaTime;
+            // Applying gravity in flight
+            if (!IsGrounded && _moveVelocityVertical.y > 0f)
+                _moveVelocityVertical.y += Gravity * Time.deltaTime;
+
+            // Applying more gravity on landing
+            // It makes jump less floaty and more controllable when landing
+            if (!IsGrounded && _moveVelocityVertical.y <= 0f)
+                _moveVelocityVertical.y += 2f * Gravity * Time.deltaTime;
         }
         void ApplyHeight()
         {
-            //// UNDONE: ƒÓ‰ÂÎ‡Ú¸ ‰ÂÚÂÍˆË˛ ÔÓÚÓÎÍ‡, ‚ÓÁÏÓÊÌÓ ÌÛÊÂÌ ÒÚ‡ÚÛÒ IsInCrouching
-            //if (IsCrouching && Physics.Raycast(transform.position + _defaultCenter, Vector3.up, _defaultHeight + 4f))
-            //{
-            //    Debug.Log("Obstacle Above!");
-            //    return;
-            //}
+            // UNDONE: –í –ø—Ä–∏—Å—è–¥–µ —Å –ø—Ä–µ–ø—è—Ç—Å—Ç–≤–∏–µ–º –Ω–∞–¥ –≥–æ–ª–æ–≤–æ–π, –µ—Å–ª–∏ –æ—Ç–∂–∞—Ç—å –ø—Ä–∏—Å—è–¥, –º–µ–Ω—è–µ—Ç—Å—è _speedMultiplier
+            // Checking for overhead obstacles
+            Vector3 originInCrouchHeight = transform.position + new Vector3(0f, _defaultHeight * CrouchHeightMultiplier, 0f);
+            float distanceToDefaultHeight = _defaultHeight - (_defaultHeight * CrouchHeightMultiplier);
+            if (Physics.Raycast(originInCrouchHeight, Vector3.up, distanceToDefaultHeight))
+            {
+                _canStandHere = false;
+                return;
+            }
+            else
+            {
+                _canStandHere = true;
+            }
 
-            float targetHeight = IsCrouching ? CrouchHeightMultiplier * _defaultHeight : _defaultHeight;
+            // Accelerate or decelerate to target height
             float currentHeight = _characterController.height;
-            Vector3 targetCenter = IsCrouching ? _defaultCenter - new Vector3(0f, _defaultCenter.y * CrouchHeightMultiplier, 0f) : _defaultCenter;
             Vector3 currentCenter = _characterController.center;
-            Vector3 targetCameraPivotPosition = IsCrouching ? _defaultCameraPivotPosition - new Vector3(0f, _defaultCameraPivotPosition.y * CrouchHeightMultiplier, 0f) : _defaultCameraPivotPosition;
             Vector3 curentCameraPivotPosition = CameraPivot.transform.localPosition;
-            float offset = 0.01f;
+            float targetHeight;
+            Vector3 targetCenter;
+            Vector3 targetCameraPivotPosition;
+            if (!IsCrouching && _canStandHere)
+            {
+                targetHeight = _defaultHeight;
+                targetCenter = _defaultCenter;
+                targetCameraPivotPosition = _defaultCameraPivotPosition;
+            }
+            else
+            {
+                targetHeight = CrouchHeightMultiplier * _defaultHeight;
+                targetCenter = _defaultCenter - new Vector3(0f, _defaultCenter.y * CrouchHeightMultiplier, 0f);
+                targetCameraPivotPosition = _defaultCameraPivotPosition - new Vector3(0f, _defaultCameraPivotPosition.y * CrouchHeightMultiplier, 0f);
+            }
 
+            float offset = 0.01f;
             if (currentHeight < targetHeight - offset
                 || currentHeight > targetHeight + offset)
             {
-                _characterController.height = Mathf.Lerp(currentHeight, targetHeight, Time.deltaTime * HeightLerpTime);
-                _characterController.center = Vector3.Lerp(currentCenter, targetCenter, Time.deltaTime * HeightLerpTime);
-                CameraPivot.transform.localPosition = Vector3.Lerp(curentCameraPivotPosition, targetCameraPivotPosition, Time.deltaTime * HeightLerpTime);
+                _characterController.height = Mathf.Lerp(currentHeight, targetHeight, Time.deltaTime * HeightAcceleration);
+                _characterController.center = Vector3.Lerp(currentCenter, targetCenter, Time.deltaTime * HeightAcceleration);
+                CameraPivot.transform.localPosition = Vector3.Lerp(curentCameraPivotPosition, targetCameraPivotPosition, Time.deltaTime * HeightAcceleration);
             }
             else
             {
@@ -163,67 +234,87 @@ namespace TheNorth
         }
         void ApplyJump()
         {
-            if (IsGrounded && _inputHandler.JumpValue)
+            if (IsGrounded)
             {
-                // Sqrt(H * -2 * G) = how much velocity needed to reach desired height
-                _moveVelocity.y = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+                if (_input.Player.Jump.IsPressed())
+                {
+                    // Sqrt(-2 * g * h) = how much velocity needed to reach desired height
+                    _moveVelocityVertical.y = Mathf.Sqrt(-2f * Gravity * JumpHeight);
+                    _speedMultiplierInAir = _speedMultiplier;
+
+                }
+                else
+                {
+                    _speedMultiplierInAir = GetSpeedMultiplier();
+                }
             }
         }
-        float ApplySpeed()
+        float GetSpeedMultiplier()
         {
-            if (CanCrouch && IsCrouching)
+            if (IsCrouching)
                 return CrouchSpeedMultiplier;
 
-            if (CanSprint && IsSprinting)
+            if (IsSprinting)
                 return SprintSpeedMultiplier;
 
             return 1f;
         }
         void ApplyMove()
         {
-            _speedMultiplier = ApplySpeed();
+            // Calculating target speed
+            float targetSpeed;
+            if (IsGrounded)
+                targetSpeed = MoveSpeed * _speedMultiplier;
+            else
+                targetSpeed = MoveSpeed * _speedMultiplierInAir;
 
-            float targetSpeed = MoveSpeed * _speedMultiplier;
-            if (_inputHandler.MoveValue == Vector2.zero)
-                targetSpeed = 0.0f;
+            if (_input.Player.Move.ReadValue<Vector2>() == Vector2.zero)
+                targetSpeed = 0f;
 
-            float currentHorizontalSpeed = new Vector3(CurrentVelocity.x, 0.0f, CurrentVelocity.z).magnitude;
+            // Accelerate or decelerate to target speed
+            float currentHorizontalSpeed = new Vector3(CurrentVelocity.x, 0f, CurrentVelocity.z).magnitude;
             float offset = 0.1f;
-
-            // accelerate or decelerate to target speed
             if (currentHorizontalSpeed < targetSpeed - offset
                 || currentHorizontalSpeed > targetSpeed + offset)
             {
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * _inputHandler.MoveValue.magnitude, Time.deltaTime * SpeedLerpTime);
-                // round 3 decimal places
-                _speed = Mathf.Round(_speed * 1000f) * 0.001f;
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * _input.Player.Move.ReadValue<Vector2>().magnitude, Time.deltaTime * MoveAcceleration);
             }
             else
             {
                 _speed = targetSpeed;
             }
 
-            Vector3 inputDirection = new(_inputHandler.MoveValue.x, 0.0f, _inputHandler.MoveValue.y);
-            if (_inputHandler.MoveValue != Vector2.zero)
+            // Applying movement
+            if (_input.Player.Move.ReadValue<Vector2>() != Vector2.zero)
             {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg + CameraPivot.transform.eulerAngles.y;
-                //float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                //    RotationSmoothTime);
-
-                //// rotate to face input direction relative to camera position
-                //transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+                _targetRotation = Mathf.Atan2(_input.Player.Move.ReadValue<Vector2>().x, _input.Player.Move.ReadValue<Vector2>().y) * Mathf.Rad2Deg + CameraPivot.transform.eulerAngles.y;
             }
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            _targetDirection = Quaternion.Euler(0f, _targetRotation, 0f) * Vector3.forward;
 
-            _moveVelocity = (targetDirection * _speed) + new Vector3(0, _moveVelocity.y, 0);
+            // Finalize horizontal velocity
+            _moveVelocityHorizontal = _targetDirection * _speed;
+        }
+        void FinalizeMove()
+        {
+            // Keep horizonal velocity in air
+            if (!CanMoveInAir && _moveVelocityHorizontalInAir != Vector3.zero)
+                _moveVelocityHorizontal = _moveVelocityHorizontalInAir;
+
+            // Check if player under the ceiling
+            if (IsCeiling && _moveVelocityVertical.y > 0f)
+                _moveVelocityVertical.y = 0f;
+
+            _moveVelocity = _moveVelocityHorizontal + _moveVelocityVertical;
 
         }
         void ApplyLook()
         {
-            _rotationX += (IsInvertX ? 1 : -1) * _inputHandler.LookValue.y * MouseSensitivity;
-            _rotationX = Mathf.Clamp(_rotationX, VerticalFov.x, VerticalFov.y);
-            CameraPivot.transform.localRotation = Quaternion.Euler(_rotationX, 0, 0);
-            transform.rotation *= Quaternion.Euler(0, _inputHandler.LookValue.x * MouseSensitivity, 0);
+            _cameraPitch += (IsInvertY ? 1 : -1) * _input.Player.Look.ReadValue<Vector2>().y * MouseSensitivity * (IgnoreTimeScale ? 1f : Time.timeScale);
+            _cameraPitch = Mathf.Clamp(_cameraPitch, VerticalFov.x, VerticalFov.y);
+            CameraPivot.transform.localRotation = Quaternion.Euler(_cameraPitch, 0f, 0f);
+
+            _cameraYaw += (IsInvertX ? -1 : 1) * _input.Player.Look.ReadValue<Vector2>().x * MouseSensitivity * (IgnoreTimeScale ? 1f : Time.timeScale);
+            transform.rotation = Quaternion.Euler(0f, _cameraYaw, 0f);
         }
     }
 }
