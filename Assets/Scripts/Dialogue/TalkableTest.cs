@@ -1,18 +1,23 @@
+using System;
+using System.Collections.Generic;
+using TheNorth;
 using UnityEngine;
 
 public class TalkableTest : MonoBehaviour
 {
+    [SerializeField] private List<Story> _dialogues;
     [SerializeField] private GameObject _visualCue;
-    [SerializeField] private TextAsset _inkJSON;
     [SerializeField] private bool _canTalk;
-    public void StartDialogue() 
+    public bool TryStartDialogue(Action dialogueCallback)
     {
         if(_canTalk) 
         {
-            DialogueManager.Instance.EnterDialogue(_inkJSON);
             _canTalk = false;
             _visualCue.SetActive(false);
+            DialogueLogic.Instance.StartDialogue(_dialogues, dialogueCallback);
+            return true;
         }
+        return false;
     }
     private void Update()
     {

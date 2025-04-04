@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System;
 using NaughtyAttributes;
 using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using NUnit.Framework.Interfaces;
 
 namespace TheNorth
 {
@@ -51,6 +53,7 @@ namespace TheNorth
         [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public bool IsGrounded { get; private set; }
         [field: SerializeField, Foldout("Dynamic Parameters"), NaughtyAttributes.ReadOnly] public bool IsCrouching { get; private set; }
 
+        public bool _isInUI;
         CharacterController _characterController;
         Vector3 _moveVelocity;
         Vector3 _defaultCenter;
@@ -92,25 +95,28 @@ namespace TheNorth
         }
         void Update()
         {
-            CheckStates();
+            if(_isInUI == false) 
+            {
+                CheckStates();
 
-            if (IsAffectedByGravity)
-                ApplyGravity();
+                if (IsAffectedByGravity)
+                    ApplyGravity();
 
-            if (CanCrouch)
-                ApplyHeight();
+                if (CanCrouch)
+                    ApplyHeight();
 
-            if (CanJump)
-                ApplyJump();
-            
-            if (CanMove)
-                ApplyMove();
+                if (CanJump)
+                    ApplyJump();
+                
+                if (CanMove)
+                    ApplyMove();
 
-            _characterController.Move(_moveVelocity * Time.deltaTime);
+                _characterController.Move(_moveVelocity * Time.deltaTime);
+            }
         }
         void LateUpdate()
         {
-            if (CanLook)
+            if (CanLook && _isInUI == false)
                 ApplyLook();
         }
         void OnDrawGizmos()
@@ -149,28 +155,43 @@ namespace TheNorth
         {
             if(context.started) 
             {
-                DialogueManager.Instance.OnSubmitPressed();
+                //DialogueManager.Instance.OnSubmitPressed();
             }
         }
         public void OnUse(InputAction.CallbackContext context)
         {
-            if(context.started) {
+            if(context.started) 
+            {
                 Camera camera = Camera.main;
                 RaycastHit[] hits = Physics.RaycastAll(camera.transform.position, camera.transform.forward, _maxDialogueDistance, _useButtonLayerMask);
-                TryStartDialogue(hits);
+                if(TryStartDialogue(hits)) 
+                {
+                    OnInteractionStarted();
+                }
             }
         }
-        private bool TryStartDialogue(RaycastHit[] hits) {
+        private bool TryStartDialogue(RaycastHit[] hits) 
+        {
             for(int i = 0; i < hits.Length; i++) {
                 TalkableTest talkable = hits[i].collider.gameObject.GetComponent<TalkableTest>();
-                if (talkable != null) {
-                    talkable.StartDialogue();
-                    return true;
+                if (talkable != null) 
+                {
+                    return talkable.TryStartDialogue(dialogueCallback: OnInteractionStopped);
                 }
             }
             return false;
         }
 
+        private void OnInteractionStarted() 
+        {
+            _isInUI = true;
+            UnlockCursor();
+        }
+        private void OnInteractionStopped() 
+        {
+            _isInUI = false;
+            LockCursor();
+        }
         void CheckStates()
         {
             CurrentVelocity = _characterController.velocity;
@@ -288,6 +309,11 @@ namespace TheNorth
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+        }
+        private void UnlockCursor() 
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 }
