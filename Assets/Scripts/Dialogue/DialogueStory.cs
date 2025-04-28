@@ -6,7 +6,6 @@ namespace TheNorth
     [Serializable]
     public struct Story
     {
-        public Action acionOnStoryEnd;
         public string tag;
         public string text;
         public Answer[] answers;

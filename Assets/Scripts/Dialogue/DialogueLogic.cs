@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TMPro;
+using TMPro.EditorUtilities;
 using Unity;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
@@ -21,6 +23,7 @@ namespace TheNorth
         private Dictionary<string, Story> _dialogueStoriesByTag;
         public event Action<Story> OnChangedStory;
         public event Action OnEndedDialogue;
+        private Story _currentStory;
         public bool IsDialoguePlaying;
 
         private void Awake()
@@ -39,10 +42,12 @@ namespace TheNorth
         {
             if (_dialogueStoriesByTag.Keys.Contains(tag) == false) 
             {
+                DialogueEventManager.Instance.Trigger(_currentStory.tag);
                 OnEndedDialogue?.Invoke();
             }
             else 
             {
+                _currentStory = _dialogueStoriesByTag[tag];
                 OnChangedStory?.Invoke(_dialogueStoriesByTag[tag]);
             }
         }
